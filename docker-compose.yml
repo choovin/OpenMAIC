@@ -17,6 +17,8 @@ services:
         - NEXT_PUBLIC_ENABLE_VIDEO_EXPORT=${NEXT_PUBLIC_ENABLE_VIDEO_EXPORT:-}
         - NEXT_PUBLIC_VIDEO_EXPORT_CTA_DESTINATION=${NEXT_PUBLIC_VIDEO_EXPORT_CTA_DESTINATION:-}
         - NEXT_PUBLIC_ENABLE_PPTX_IMPORT=${NEXT_PUBLIC_ENABLE_PPTX_IMPORT:-}
+        # Build-time injection into next.config.ts headers(). Empty -> 'self' only.
+        - ALLOWED_FRAME_ANCESTORS=${ALLOWED_FRAME_ANCESTORS:-}
     ports:
       - '3000:3000'
     env_file:

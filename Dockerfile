@@ -1,15 +1,21 @@
 # ---- Stage 1: Base ----
 FROM node:22-alpine AS base
 
+# 国内网络:换 alpine 源到阿里云 + 装 libc6-compat
+RUN sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories
 RUN apk add --no-cache libc6-compat
-RUN corepack enable && corepack prepare pnpm@10.28.0 --activate
+
+# 国内网络:用 npmmirror 安装 pnpm,跳过 corepack(后者从 GitHub releases 拉,国内不稳定)
+ENV NPM_CONFIG_REGISTRY=https://registry.npmmirror.com
+RUN npm install -g pnpm@10.28.0 && pnpm config set registry https://registry.npmmirror.com
 
 WORKDIR /app
 
 # ---- Stage 2: Dependencies ----
 FROM base AS deps
 
-# Native build tools for sharp, @napi-rs/canvas
+# 同样的 alpine 源替换 + native build tools for sharp, @napi-rs/canvas
+RUN sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories
 RUN apk add --no-cache python3 build-base g++ cairo-dev pango-dev jpeg-dev giflib-dev librsvg-dev
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -43,6 +49,7 @@ ENV NEXT_PUBLIC_SHOW_VOCATIONAL_TEST_UI=$NEXT_PUBLIC_SHOW_VOCATIONAL_TEST_UI
 ENV NEXT_PUBLIC_ENABLE_VIDEO_EXPORT=$NEXT_PUBLIC_ENABLE_VIDEO_EXPORT
 ENV NEXT_PUBLIC_VIDEO_EXPORT_CTA_DESTINATION=$NEXT_PUBLIC_VIDEO_EXPORT_CTA_DESTINATION
 ENV NEXT_PUBLIC_ENABLE_PPTX_IMPORT=$NEXT_PUBLIC_ENABLE_PPTX_IMPORT
+ENV ALLOWED_FRAME_ANCESTORS=$ALLOWED_FRAME_ANCESTORS
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/packages ./packages
@@ -60,6 +67,8 @@ ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
 ENV PORT=3000
 
+# 同上,换 alpine 源
+RUN sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories
 RUN apk add --no-cache libc6-compat cairo pango jpeg giflib librsvg
 
 RUN addgroup --system --gid 1001 nodejs && \
