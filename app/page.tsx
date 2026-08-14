@@ -735,10 +735,8 @@ function HomePage() {
         transition={{ duration: 0.6, ease: 'easeOut' }}
         className={cn('relative z-20 w-full max-w-[800px] flex flex-col items-center mt-[10vh]')}
       >
-        {/* ── Logo ── */}
-        <motion.img
-          src="/logo-horizontal.png"
-          alt="OpenMAIC"
+        {/* ── 小π助教 Header（吉祥物图标 + 标题 + 副标题，对齐 AiChat）── */}
+        <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{
@@ -747,18 +745,22 @@ function HomePage() {
             stiffness: 200,
             damping: 20,
           }}
-          className="h-12 md:h-16 mb-2 -ml-2 md:-ml-3"
-        />
-
-        {/* ── Slogan ── */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.25 }}
-          className="text-sm text-muted-foreground/60 mb-8"
+          className="flex items-center gap-3 mb-8"
         >
-          {t('home.slogan')}
-        </motion.p>
+          <img
+            src="/mascot.png"
+            alt="小π助教"
+            className="h-[84px] w-[84px] shrink-0 object-contain"
+          />
+          <div className="text-left">
+            <h1 className="bg-gradient-to-r from-[#2F8EFF] to-[#2ED9FF] bg-clip-text text-2xl md:text-3xl font-medium text-transparent">
+              Hi~我是您的小π助教
+            </h1>
+            <p className="mt-1.5 text-sm text-[#666666]">
+              专注数学答疑、习题解析、知识巩固。请输入你的问题，即刻开启智能辅导。
+            </p>
+          </div>
+        </motion.div>
 
         {/* ── Unified input area ── */}
         <motion.div
