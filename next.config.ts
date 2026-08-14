@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
     '@earendil-works/pi-ai',
     '@earendil-works/pi-agent-core',
     '@openmaic/generation',
+    // Node-only (node:fs / node:child_process). Loaded via a runtime import in
+    // lib/ai/providers.ts (server-only bedrock path); keep it external so Node
+    // resolves it natively instead of bundling it.
+    '@aws-sdk/credential-providers',
   ],
   experimental: {
     proxyClientMaxBodySize: '200mb',

@@ -5,6 +5,16 @@ function encode(str: string): Uint8Array {
   return new TextEncoder().encode(str);
 }
 
+/** Constant-length string comparison (mitigates trivial timing leaks). */
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) {
+    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return mismatch === 0;
+}
+
 /** Convert ArrayBuffer to hex string */
 function bufToHex(buf: ArrayBuffer): string {
   return Array.from(new Uint8Array(buf))
@@ -57,6 +67,15 @@ export async function middleware(request: NextRequest) {
   // Check cookie — validate HMAC signature, not just existence
   const cookie = request.cookies.get('openmaic_access');
   if (cookie?.value && (await verifyToken(cookie.value, accessCode))) {
+    return NextResponse.next();
+  }
+
+  // Cross-site iframe embedding: a SameSite=Lax cookie is not sent inside a
+  // cross-site iframe, so also accept the raw access code via the x-access-code
+  // header. The embedded client injects it (from the ?access_code= URL param /
+  // postMessage) on every same-origin /api request. Works over HTTP or HTTPS.
+  const headerCode = request.headers.get('x-access-code');
+  if (headerCode && safeEqual(headerCode, accessCode)) {
     return NextResponse.next();
   }
 

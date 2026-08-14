@@ -1762,9 +1762,16 @@ type BedrockCredentialProvider = () => Promise<BedrockCredentials>;
 let bedrockCredentialProviderPromise: Promise<BedrockCredentialProvider> | undefined;
 
 function getBedrockCredentialProvider(): Promise<BedrockCredentialProvider> {
-  bedrockCredentialProviderPromise ??= import('@aws-sdk/credential-providers').then(
-    ({ fromNodeProviderChain }) => fromNodeProviderChain(),
-  );
+  // `@aws-sdk/credential-providers` pulls in node:fs / node:child_process. This module is
+  // shared with client code (access-code-guard.tsx → settings.ts → providers.ts), so the
+  // bundler must never include it in the client/SSR chunk. The magic comments below tell
+  // webpack and Turbopack to leave this as a native runtime import; it is only ever reached
+  // on the server (bedrock model creation). See serverExternalPackages in next.config.ts.
+  bedrockCredentialProviderPromise ??= import(
+    /* webpackIgnore: true */
+    /* turbopackIgnore: true */
+    '@aws-sdk/credential-providers'
+  ).then(({ fromNodeProviderChain }) => fromNodeProviderChain());
   return bedrockCredentialProviderPromise;
 }
 
