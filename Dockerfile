@@ -6,8 +6,10 @@ RUN sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories
 RUN apk add --no-cache libc6-compat
 
 # 国内网络:用 npmmirror 安装 pnpm,跳过 corepack(后者从 GitHub releases 拉,国内不稳定)
+# 当前 pnpm-lock.yaml 是 pnpm 9.x 生成的,装 pnpm 10.x 会触发 ERR_PNPM_LOCKFILE_BREAKING_CHANGE。
+# 等本机升级到 10.x 并重新 lockfile 后再切回 pnpm@10.28.0。
 ENV NPM_CONFIG_REGISTRY=https://registry.npmmirror.com
-RUN npm install -g pnpm@10.28.0 && pnpm config set registry https://registry.npmmirror.com
+RUN npm install -g pnpm@9.15.0 && pnpm config set registry https://registry.npmmirror.com
 
 WORKDIR /app
 
@@ -22,6 +24,11 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/ ./packages/
 COPY scripts/ ./scripts/
 
+# onnxruntime-node(@hyperframes/producer 的传递依赖,被 hoist 到 workspace root,只有 video-export
+# profile 的 render-service 会用到)在 install 时从 onnxxruntimetmp.blob.core.windows.net 下载二进制,
+# 国内网络下载失败 302。主 image 不需要它,跳过即可(变量名是 ONNXRUNTIME_NODE_INSTALL=skip),
+# 启用 video-export 时再单独解决。
+ENV ONNXRUNTIME_NODE_INSTALL=skip
 RUN pnpm install --frozen-lockfile
 
 # ---- Stage 3: Builder ----
